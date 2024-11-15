@@ -11,10 +11,18 @@ from geometry_msgs.msg import Twist
 import math
 from std_msgs.msg import String, Float32, Float64, UInt16
 from carver_interfaces.msg import PinMapped
+from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSReliabilityPolicy
+
 
 class MotorController(Node):
+
     def __init__(self):
         super().__init__('MotorController')
+        best_effort_qos = QoSProfile(
+                reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                durability=QoSDurabilityPolicy.VOLATILE,
+                depth=10
+            )
         self.timeout_cmd_vel = 1.0
 
         self.torque_cons = 25.07
@@ -22,7 +30,8 @@ class MotorController(Node):
 
         self.create_subscription(Twist, "cmd_vel_confidence", self.cmd_vel_callback, 10)
         self.create_subscription(PinMapped, "/xbox_controller", self.xbox_callback, 10)
-        self.create_subscription(UInt16, "/accl_publisher", self.accl_callback, 10)
+        # self.create_subscription(UInt16, "/accl_publisher", self.accl_callback, 10)
+        self.create_subscription(UInt16, "/accl_publisher", self.accl_callback, best_effort_qos)
         
         self.wheel_velocity_pub = self.create_publisher(Float32, "feedback_wheelspeed", 10)
         self.odrive_vel_pub = self.create_publisher(Float64, "/odrive_cmd_vel", 10)
@@ -98,7 +107,7 @@ class MotorController(Node):
         self.odrv.axis0.controller.config.control_mode = ControlMode.VELOCITY_CONTROL
         self.odrv.axis0.controller.input_vel = self.xbox_velocity * -5.0 * self.gear 
         # self.odrv.axis0.controller.input_vel = self.better_hand_velocity * 10.0 
-        #self.odrv.axis0.controller.input_vel = 
+        self.odrv.axis0.controller.input_vel = float(self.accl_vel)
 
         msg = Float64()
         msg.data = self.xbox_velocity * -5.0 * self.gear 
@@ -157,6 +166,8 @@ class MotorController(Node):
             raw_data = 0
         
         linear_vel = float(raw_data)*((10.0*2.0*math.pi*0.175)/50000.0)
+        self.accl_vel = linear_vel
+        self.get_logger().info(f"Set Speed = {self.accl_vel} rps")
         msg = Twist()
         msg.linear.x = linear_vel
         

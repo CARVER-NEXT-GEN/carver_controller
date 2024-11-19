@@ -109,32 +109,19 @@ class CarverMessenger(Node):
             if self.n == self.n_max:
                 self.get_logger().info("collect data finish, start to publish data from imu")
         else:
-            # Find covariance in BNO086
-            def compute_covariance(data_list, size=9):
-                """
-                Compute a covariance matrix and convert it to a 1D array of specified size.
-                If data is insufficient, return a default array of zeros.
-                """
-                if len(data_list) > 1:
-                    array = np.array(data_list)
-                    cov_matrix = np.cov(array.T)  # Compute covariance matrix
-
-                    return np.resize(cov_matrix.flatten(), size).tolist()  # Ensure 1D array with `size` elements
-                else:
-                    return [0.0] * size  # Default covariance
             # Compute covariance for BNO086
-            euler_cov_086 = compute_covariance(self.euler_list_086, size=9)
-            quat_cov_086 = compute_covariance(self.quat_list_086, size=9)
-            acc_cov_086 = compute_covariance(self.acc_list_086, size=9)
-            gyro_cov_086 = compute_covariance(self.gyro_list_086, size=9)
-            mag_cov_086 = compute_covariance(self.mag_list_086, size=9)
+            euler_cov_086 = self.compute_covariance(self.euler_list_086, 9)
+            quat_cov_086 = self.compute_covariance(self.quat_list_086, 9)
+            acc_cov_086 = self.compute_covariance(self.acc_list_086, 9)
+            gyro_cov_086 = self.compute_covariance(self.gyro_list_086, 9)
+            mag_cov_086 = self.compute_covariance(self.mag_list_086, 9)
 
             # Compute covariance for BNO055
-            euler_cov_055 = compute_covariance(self.euler_list_055, size=9)
-            quat_cov_055 = compute_covariance(self.quat_list_055, size=9)
-            acc_cov_055 = compute_covariance(self.acc_list_055, size=9)
-            gyro_cov_055 = compute_covariance(self.gyro_list_055, size=9)
-            mag_cov_055 = compute_covariance(self.mag_list_055, size=9)
+            euler_cov_055 = self.compute_covariance(self.euler_list_055, 9)
+            quat_cov_055 = self.compute_covariance(self.quat_list_055, 9)
+            acc_cov_055 = self.compute_covariance(self.acc_list_055, 9)
+            gyro_cov_055 = self.compute_covariance(self.gyro_list_055, 9)
+            mag_cov_055 = self.compute_covariance(self.mag_list_055, 9)
 
             # ***Old solution***
             # orien_array_086 = np.array(self.quat_list_086)
@@ -161,7 +148,7 @@ class CarverMessenger(Node):
             imu_086.linear_acceleration.y = msg.data[4]
             imu_086.linear_acceleration.z = msg.data[5]
 
-            imu_086.orientation_covariance = euler_cov_086 # Not sure to use quat or euler
+            imu_086.orientation_covariance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Not sure to use quat or euler
             imu_086.linear_acceleration_covariance = acc_cov_086
             imu_086.angular_velocity_covariance = gyro_cov_086
 
@@ -193,7 +180,7 @@ class CarverMessenger(Node):
             imu_055.linear_acceleration.y = msg.data[19]
             imu_055.linear_acceleration.z = msg.data[20]
 
-            imu_055.orientation_covariance = euler_cov_055 # Not sure to use quat or euler
+            imu_055.orientation_covariance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Not sure to use quat or euler
             imu_055.linear_acceleration_covariance = acc_cov_055
             imu_055.angular_velocity_covariance = gyro_cov_055
 
@@ -214,6 +201,19 @@ class CarverMessenger(Node):
             self.mag_055_publisher.publish(mag_055)
 
             # self.get_logger().info('Published IMU and MagneticField messages')
+            
+    def compute_covariance(self, data_list, size):
+        """
+        Compute a covariance matrix and convert it to a 1D array of specified size.
+        If data is insufficient, return a default array of zeros.
+        """
+        if len(data_list) > 1:
+            array = np.array(data_list)
+            cov_matrix = np.cov(array.T)  # Compute covariance matrix
+
+            return np.resize(cov_matrix.flatten(), size).tolist()  # Ensure 1D array with `size` elements
+        else:
+            return [0.0] * size  # Default covariance
 
    
 

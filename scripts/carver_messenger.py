@@ -6,161 +6,172 @@ from rclpy.node import Node
 
 from std_msgs.msg import Float64MultiArray
 
+from geometry_msgs.msg import Vector3
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import TwistWithCovarianceStamped, PoseWithCovarianceStamped
 from sensor_msgs.msg import Imu, MagneticField
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
-'''
-    // IMU_086 acceleration
-    f64array_msg.data.data[0] = IMU_086_FRTOS.acceleration.x;
-    f64array_msg.data.data[1] = IMU_086_FRTOS.acceleration.y;
-    f64array_msg.data.data[2] = IMU_086_FRTOS.acceleration.z;
+import numpy as np
 
-    // IMU_086 linear acceleration
-    f64array_msg.data.data[3] = IMU_086_FRTOS.linear_acceleration.x;
-    f64array_msg.data.data[4] = IMU_086_FRTOS.linear_acceleration.y;
-    f64array_msg.data.data[5] = IMU_086_FRTOS.linear_acceleration.z;
-
-    // IMU_086 angular velocity
-    f64array_msg.data.data[6] = IMU_086_FRTOS.angular_velocity.x;
-    f64array_msg.data.data[7] = IMU_086_FRTOS.angular_velocity.y;
-    f64array_msg.data.data[8] = IMU_086_FRTOS.angular_velocity.z;
-
-    // IMU_086 magnetometer
-    f64array_msg.data.data[9]  = IMU_086_FRTOS.magnetometer.x;
-    f64array_msg.data.data[10] = IMU_086_FRTOS.magnetometer.y;
-    f64array_msg.data.data[11] = IMU_086_FRTOS.magnetometer.z;
-
-    // IMU_086 euler angles
-    f64array_msg.data.data[12] = IMU_086_FRTOS.euler_angle.roll;
-    f64array_msg.data.data[13] = IMU_086_FRTOS.euler_angle.pitch;
-    f64array_msg.data.data[14] = IMU_086_FRTOS.euler_angle.yaw;
-
-
-//     IMU_055 acceleration
-    f64array_msg.data.data[15] = IMU_055_FRTOS.accel.x;
-    f64array_msg.data.data[16] = IMU_055_FRTOS.accel.y;
-    f64array_msg.data.data[17] = IMU_055_FRTOS.accel.z;
-
-    // IMU_055 linear acceleration
-    f64array_msg.data.data[18] = IMU_055_FRTOS.lin_acc.x;
-    f64array_msg.data.data[19] = IMU_055_FRTOS.lin_acc.y;
-    f64array_msg.data.data[20] = IMU_055_FRTOS.lin_acc.z;
-
-    // IMU_055 gyro (angular velocity)
-    f64array_msg.data.data[21] = IMU_055_FRTOS.gyro.x;
-    f64array_msg.data.data[22] = IMU_055_FRTOS.gyro.y;
-    f64array_msg.data.data[23] = IMU_055_FRTOS.gyro.z;
-
-    // IMU_055 magnetometer
-    f64array_msg.data.data[24] = IMU_055_FRTOS.mag.x;
-    f64array_msg.data.data[25] = IMU_055_FRTOS.mag.y;
-    f64array_msg.data.data[26] = IMU_055_FRTOS.mag.z;
-
-    // IMU_055 euler angles
-    f64array_msg.data.data[27] = IMU_055_FRTOS.euler.roll;
-    f64array_msg.data.data[28] = IMU_055_FRTOS.euler.pitch;
-    f64array_msg.data.data[29] = IMU_055_FRTOS.euler.yaw;
-
-    //
-    f64array_msg.data.data[30] = IMU_086_FRTOS.quaternion.i;
-    f64array_msg.data.data[31] = IMU_086_FRTOS.quaternion.j;
-    f64array_msg.data.data[32] = IMU_086_FRTOS.quaternion.k;
-    f64array_msg.data.data[33] = IMU_086_FRTOS.quaternion.w;
-    //
-    f64array_msg.data.data[34] = IMU_055_FRTOS.quat.x;
-    f64array_msg.data.data[35] = IMU_055_FRTOS.quat.y;
-    f64array_msg.data.data[36] = IMU_055_FRTOS.quat.z;
-    f64array_msg.data.data[37] = IMU_055_FRTOS.quat.w;
-'''
 
 class CarverMessenger(Node):
     def __init__(self):
         super().__init__('carver_messenger_node')
+
+        self.get_logger().info('carver messenger node has been start')
+
         #Pub
-        self.odom086_pub = self.create_publisher(Odometry, '/odom086', 10)
-        self.odom055_pub = self.create_publisher(Odometry, '/odom055', 10)
-        self.imu055_pub = self.create_publisher(Imu, '/imu086', 10)
-        self.imu055_pub = self.create_publisher(Imu, '/imu055', 10)
-        self.mag086_pub = self.create_publisher(MagneticField, '/mag086', 10)
-        self.mag055_pub = self.create_publisher(MagneticField, '/mag055', 10)
+        self.imu_086_publisher = self.create_publisher(Imu, 'imu_086/data', 10)
+        self.imu_055_publisher = self.create_publisher(Imu, 'imu_055/data', 10)
+        self.mag_086_publisher = self.create_publisher(MagneticField, 'imu_086/mag', 10)
+        self.mag_055_publisher = self.create_publisher(MagneticField, 'imu_055/mag', 10)
         #Sub
-        self.imu_floatarray = self.create_subscription(Float64MultiArray, '/cubemx_imu_data', self.imu_floatarray_callback, 10)
+        qos_profile = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            depth=10  # Depth can be adjusted as needed
+        )
+        self.imu_floatarray = self.create_subscription(Float64MultiArray, '/cubemx_imu_data', self.imu_callback, qos_profile)
 
+        self.n = 0
+        self.n_max = 10000
+        self.orien_list_086 = []
+        self.acc_list_086 = []
+        self.gyro_list_086 = []
+        self.mag_list_086 = []
+        self.orien_list_055 = []
+        self.acc_list_055 = []
+        self.gyro_list_055 = []
+        self.mag_list_055 = []
 
+    def imu_callback(self, msg:Float64MultiArray):
 
-    def imu_floatarray_callback(self, msg:Float64MultiArray):
-        self.imu086_msg = Imu()
+        if self.n < self.n_max:
+            self.n+=1
+            self.acc_list_086.append([
+                msg.data[3],
+                msg.data[4],
+                msg.data[5]
+            ])
+            self.gyro_list_086.append([
+                msg.data[6],
+                msg.data[7],
+                msg.data[8]
+            ])
+            self.mag_list_086.append([
+                msg.data[9],
+                msg.data[10],
+                msg.data[11]
+            ])
 
-        # orientation BNO086
-        self.imu086_msg.orientation.x = msg.data[30]
-        self.imu086_msg.orientation.y = msg.data[31]
-        self.imu086_msg.orientation.z = msg.data[32]
-        self.imu086_msg.orientation.w = msg.data[33]
+            self.acc_list_055.append([
+                msg.data[18],
+                msg.data[19],
+                msg.data[20]
+            ])
+            self.gyro_list_055.append([
+                msg.data[21],
+                msg.data[22],
+                msg.data[23]
+            ])
+            self.mag_list_055.append([
+                msg.data[24],
+                msg.data[25],
+                msg.data[26]
+            ])
 
-        # float64[9]
-        self.imu086_msg.orientation_covariance
+            self.get_logger().info("collect data: " + str(self.n))
+        else:
+            # Find covariance in BNO086
+            orien_array_086 = np.array(self.orien_list_086)
+            orein_cov_086 = np.absolute(np.cov(orien_array_086.T))
+            acc_array_086 = np.array(self.acc_list_086)
+            acc_cov_086 = np.absolute(np.cov(acc_array_086.T))
+            gyro_array_086 = np.array(self.gyro_list_086)
+            gyro_cov_086 = np.absolute(np.cov(gyro_array_086.T))
+            mag_array_086 = np.array(self.mag_list_086)
+            mag_cov_086 = np.absolute(np.cov(mag_array_086.T))
+            # Find covariance in BNO055
+            orien_array_055 = np.array(self.orien_list_055)
+            orein_cov_055 = np.absolute(np.cov(orien_array_055.T))
+            acc_array_055 = np.array(self.acc_list_055)
+            acc_cov_055 = np.absolute(np.cov(acc_array_055.T))
+            gyro_array_055 = np.array(self.gyro_list_055)
+            gyro_cov_055 = np.absolute(np.cov(gyro_array_055.T))
+            mag_array_055 = np.array(self.mag_list_055)
+            mag_cov_055 = np.absolute(np.cov(mag_array_055.T))
 
-        # angular_velocity BNO086
-        self.imu086_msg.angular_velocity.x = msg.data[6]
-        self.imu086_msg.angular_velocity.y = msg.data[7]
-        self.imu086_msg.angular_velocity.z = msg.data[8]
+            # Parse IMU 086 data
+            imu_086 = Imu()
+            imu_086.header.stamp = self.get_clock().now().to_msg()
+            imu_086.header.frame_id = 'imu_086_frame'
 
-        # float64[9]
-        self.imu086_msg.angular_velocity_covariance
+            imu_086.orientation.x = msg.data[30]
+            imu_086.orientation.y = msg.data[31]
+            imu_086.orientation.z = msg.data[32]
+            imu_086.orientation.w = msg.data[33]
 
-        # linear_acceleration BNO086
-        self.imu086_msg.linear_acceleration.x = msg.data[3]
-        self.imu086_msg.linear_acceleration.y = msg.data[4]
-        self.imu086_msg.linear_acceleration.z = msg.data[5]
+            imu_086.angular_velocity.x = msg.data[6]
+            imu_086.angular_velocity.y = msg.data[7]
+            imu_086.angular_velocity.z = msg.data[8]
+            imu_086.linear_acceleration.x = msg.data[3]
+            imu_086.linear_acceleration.y = msg.data[4]
+            imu_086.linear_acceleration.z = msg.data[5]
 
-        # float64[9]
-        self.imu086_msg.linear_acceleration_covariance
+            imu_086.orientation_covariance = orein_cov_086
+            imu_086.linear_acceleration_covariance = acc_cov_086
+            imu_086.angular_velocity_covariance = gyro_cov_086
 
-# ////////////////////////////////////////////////////////////////////////////////
+            # Parse Magnetometer data for IMU 086
+            mag_086 = MagneticField()
+            mag_086.header.stamp = imu_086.header.stamp
+            mag_086.header.frame_id = 'imu_086_frame'
+            mag_086.magnetic_field.x = msg.data[9]
+            mag_086.magnetic_field.y = msg.data[10]
+            mag_086.magnetic_field.z = msg.data[11]
+            mag_086.magnetic_field_covariance = mag_cov_086
 
-        self.imu055_msg = Imu()
+            # ////////////////////////////////////////////////////////
 
-        # orientation BNO055
-        self.imu055_msg.orientation.x = msg.data[34]
-        self.imu055_msg.orientation.y = msg.data[35]
-        self.imu055_msg.orientation.z = msg.data[36]
-        # self.imu055_msg.orientation.w = msg.data[37]
+            # Parse IMU 055 data
+            imu_055 = Imu()
+            imu_055.header.stamp = imu_086.header.stamp
+            imu_055.header.frame_id = 'imu_055_frame'
 
-        # float64[9]
-        self.imu055_msg.orientation_covariance
+            imu_055.orientation.x = msg.data[34]
+            imu_055.orientation.y = msg.data[35]
+            imu_055.orientation.z = msg.data[36]
+            imu_055.orientation.w = msg.data[37]
 
-        # angular_velocity BNO055
-        self.imu055_msg.angular_velocity.x = msg.data[21]
-        self.imu055_msg.angular_velocity.y = msg.data[22]
-        self.imu055_msg.angular_velocity.z = msg.data[23]
+            imu_055.angular_velocity.x = msg.data[21]
+            imu_055.angular_velocity.y = msg.data[22]
+            imu_055.angular_velocity.z = msg.data[23]
+            imu_055.linear_acceleration.x = msg.data[18]
+            imu_055.linear_acceleration.y = msg.data[19]
+            imu_055.linear_acceleration.z = msg.data[20]
 
-        # float64[9]
-        self.imu055_msg.angular_velocity_covariance
+            imu_055.orientation_covariance = orein_cov_055
+            imu_055.linear_acceleration_covariance = acc_cov_055
+            imu_055.angular_velocity_covariance = gyro_cov_055
 
-        # linear_acceleration BNO086
-        self.imu055_msg.linear_acceleration.x = msg.data[18]
-        self.imu055_msg.linear_acceleration.y = msg.data[19]
-        self.imu055_msg.linear_acceleration.z = msg.data[20]
+            # Parse Magnetometer data for IMU 055
+            mag_055 = MagneticField()
+            mag_055.header.stamp = imu_055.header.stamp
+            mag_055.header.frame_id = 'imu_055_frame'
+            mag_055.magnetic_field.x = msg.data[24]
+            mag_055.magnetic_field.y = msg.data[25]
+            mag_055.magnetic_field.z = msg.data[26]
+            mag_055.magnetic_field_covariance = mag_cov_055
 
-        # float64[9]
-        self.imu055_msg.linear_acceleration_covariance
+            # Publish IMU 086 data and Magnetometer data
+            self.imu_086_publisher.publish(imu_086)
+            self.mag_086_publisher.publish(mag_086)
+            # Publish IMU 055 dataand Magnetometer data
+            self.imu_055_publisher.publish(imu_055)
+            self.mag_055_publisher.publish(mag_055)
 
-# ////////////////////////////////////////////////////////////////////////////////
-
-        self.mag055_msg = MagneticField()
-
-        self.mag055_msg.magnetic_field.x
-        self.mag055_msg.magnetic_field.y
-        self.mag055_msg.magnetic_field.z
-
-        
-
-
-        self.acceleration = msg.data
-    
-
-    
+            self.get_logger().info('Published IMU and MagneticField messages')
+   
 
 def main(args=None):
     rclpy.init(args=args)

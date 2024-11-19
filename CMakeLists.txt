@@ -29,6 +29,8 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/dummy_script.py
   scripts/carver_messenger.py
+  scripts/carver_odrive.py
+  scripts/carver_odrive_manual_steering.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

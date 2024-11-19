@@ -7,10 +7,8 @@ from rclpy.node import Node
 from std_msgs.msg import Float64MultiArray
 
 from geometry_msgs.msg import Vector3
-from nav_msgs.msg import Odometry
-from geometry_msgs.msg import TwistWithCovarianceStamped, PoseWithCovarianceStamped
 from sensor_msgs.msg import Imu, MagneticField
-from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 
 import numpy as np
 
@@ -29,17 +27,20 @@ class CarverMessenger(Node):
         #Sub
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
-            depth=10  # Depth can be adjusted as needed
+            depth=10
         )
         self.imu_floatarray = self.create_subscription(Float64MultiArray, '/cubemx_imu_data', self.imu_callback, qos_profile)
 
         self.n = 0
-        self.n_max = 10000
-        self.orien_list_086 = []
+        self.n_max = 100
+        self.euler_list_086 = []
+        self.quat_list_086 = []
         self.acc_list_086 = []
         self.gyro_list_086 = []
         self.mag_list_086 = []
-        self.orien_list_055 = []
+
+        self.euler_list_055 = []
+        self.quat_list_055 = []
         self.acc_list_055 = []
         self.gyro_list_055 = []
         self.mag_list_055 = []
@@ -48,6 +49,18 @@ class CarverMessenger(Node):
 
         if self.n < self.n_max:
             self.n+=1
+
+            self.euler_list_086.append([
+                msg.data[12],
+                msg.data[13],
+                msg.data[14]
+            ])
+            self.quat_list_086.append([
+                msg.data[30], 
+                msg.data[31], 
+                msg.data[32], 
+                msg.data[33]
+            ])
             self.acc_list_086.append([
                 msg.data[3],
                 msg.data[4],
@@ -64,6 +77,18 @@ class CarverMessenger(Node):
                 msg.data[11]
             ])
 
+
+            self.euler_list_055.append([
+                msg.data[27],
+                msg.data[28],
+                msg.data[29]
+            ])
+            self.quat_list_055.append([
+                msg.data[34], 
+                msg.data[35], 
+                msg.data[36], 
+                msg.data[37]
+            ])
             self.acc_list_055.append([
                 msg.data[18],
                 msg.data[19],
@@ -81,25 +106,43 @@ class CarverMessenger(Node):
             ])
 
             self.get_logger().info("collect data: " + str(self.n))
+            if self.n == self.n_max:
+                self.get_logger().info("collect data finish, start to publish data from imu")
         else:
             # Find covariance in BNO086
-            orien_array_086 = np.array(self.orien_list_086)
-            orein_cov_086 = np.absolute(np.cov(orien_array_086.T))
-            acc_array_086 = np.array(self.acc_list_086)
-            acc_cov_086 = np.absolute(np.cov(acc_array_086.T))
-            gyro_array_086 = np.array(self.gyro_list_086)
-            gyro_cov_086 = np.absolute(np.cov(gyro_array_086.T))
-            mag_array_086 = np.array(self.mag_list_086)
-            mag_cov_086 = np.absolute(np.cov(mag_array_086.T))
-            # Find covariance in BNO055
-            orien_array_055 = np.array(self.orien_list_055)
-            orein_cov_055 = np.absolute(np.cov(orien_array_055.T))
-            acc_array_055 = np.array(self.acc_list_055)
-            acc_cov_055 = np.absolute(np.cov(acc_array_055.T))
-            gyro_array_055 = np.array(self.gyro_list_055)
-            gyro_cov_055 = np.absolute(np.cov(gyro_array_055.T))
-            mag_array_055 = np.array(self.mag_list_055)
-            mag_cov_055 = np.absolute(np.cov(mag_array_055.T))
+            def compute_covariance(data_list, size=9):
+                """
+                Compute a covariance matrix and convert it to a 1D array of specified size.
+                If data is insufficient, return a default array of zeros.
+                """
+                if len(data_list) > 1:
+                    array = np.array(data_list)
+                    cov_matrix = np.cov(array.T)  # Compute covariance matrix
+
+                    return np.resize(cov_matrix.flatten(), size).tolist()  # Ensure 1D array with `size` elements
+                else:
+                    return [0.0] * size  # Default covariance
+            # Compute covariance for BNO086
+            euler_cov_086 = compute_covariance(self.euler_list_086, size=9)
+            quat_cov_086 = compute_covariance(self.quat_list_086, size=9)
+            acc_cov_086 = compute_covariance(self.acc_list_086, size=9)
+            gyro_cov_086 = compute_covariance(self.gyro_list_086, size=9)
+            mag_cov_086 = compute_covariance(self.mag_list_086, size=9)
+
+            # Compute covariance for BNO055
+            euler_cov_055 = compute_covariance(self.euler_list_055, size=9)
+            quat_cov_055 = compute_covariance(self.quat_list_055, size=9)
+            acc_cov_055 = compute_covariance(self.acc_list_055, size=9)
+            gyro_cov_055 = compute_covariance(self.gyro_list_055, size=9)
+            mag_cov_055 = compute_covariance(self.mag_list_055, size=9)
+
+            # ***Old solution***
+            # orien_array_086 = np.array(self.quat_list_086)
+            # orein_cov_086 = np.absolute(np.cov(orien_array_086.T))
+            # # Find covariance in BNO055
+            # orien_array_055 = np.array(self.quat_list_055)
+            # orein_cov_055 = np.absolute(np.cov(orien_array_055.T))
+
 
             # Parse IMU 086 data
             imu_086 = Imu()
@@ -118,7 +161,7 @@ class CarverMessenger(Node):
             imu_086.linear_acceleration.y = msg.data[4]
             imu_086.linear_acceleration.z = msg.data[5]
 
-            imu_086.orientation_covariance = orein_cov_086
+            imu_086.orientation_covariance = euler_cov_086 # Not sure to use quat or euler
             imu_086.linear_acceleration_covariance = acc_cov_086
             imu_086.angular_velocity_covariance = gyro_cov_086
 
@@ -150,7 +193,7 @@ class CarverMessenger(Node):
             imu_055.linear_acceleration.y = msg.data[19]
             imu_055.linear_acceleration.z = msg.data[20]
 
-            imu_055.orientation_covariance = orein_cov_055
+            imu_055.orientation_covariance = euler_cov_055 # Not sure to use quat or euler
             imu_055.linear_acceleration_covariance = acc_cov_055
             imu_055.angular_velocity_covariance = gyro_cov_055
 
@@ -170,7 +213,8 @@ class CarverMessenger(Node):
             self.imu_055_publisher.publish(imu_055)
             self.mag_055_publisher.publish(mag_055)
 
-            self.get_logger().info('Published IMU and MagneticField messages')
+            # self.get_logger().info('Published IMU and MagneticField messages')
+
    
 
 def main(args=None):

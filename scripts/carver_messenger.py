@@ -10,6 +10,7 @@ from ament_index_python import get_package_share_directory
 import os
 import yaml
 import numpy as np
+import math
 
 
 class CarverMessenger(Node):
@@ -73,6 +74,10 @@ class CarverMessenger(Node):
         self.gyro_list_055 = []
         self.mag_list_055 = []
 
+        self.roll = 0.0
+        self.pitch = 0.0
+        self.yaw = 0.0
+
     def save_covariance(self, cov_086, cov_055, name : str):
 
         with open(self.imu_cov_path, 'r') as file:
@@ -89,21 +94,16 @@ class CarverMessenger(Node):
             if self.n < self.n_max:
                 self.n+=1
 
-                self.euler_list_086.append([
-                    msg.data[12],
-                    msg.data[13],
-                    msg.data[14]
-                ])
                 self.quat_list_086.append([
-                    msg.data[30], 
-                    msg.data[31], 
-                    msg.data[32], 
-                    msg.data[33]
+                    msg.data[27],
+                    msg.data[28],
+                    msg.data[29],
+                    msg.data[30]
                 ])
                 self.acc_list_086.append([
-                    msg.data[3],
-                    msg.data[4],
-                    msg.data[5]
+                    msg.data[0],
+                    msg.data[1],
+                    msg.data[2]
                 ])
                 self.gyro_list_086.append([
                     msg.data[6],
@@ -116,32 +116,45 @@ class CarverMessenger(Node):
                     msg.data[11]
                 ])
 
-
                 self.euler_list_055.append([
-                    msg.data[27],
-                    msg.data[28],
-                    msg.data[29]
+                    msg.data[24],
+                    msg.data[25],
+                    msg.data[26]
                 ])
                 self.quat_list_055.append([
-                    msg.data[34], 
-                    msg.data[35], 
-                    msg.data[36], 
-                    msg.data[37]
+                    msg.data[31], 
+                    msg.data[32], 
+                    msg.data[33], 
+                    msg.data[34]
                 ])
                 self.acc_list_055.append([
+                    msg.data[12],
+                    msg.data[13],
+                    msg.data[14]
+                ])
+                self.gyro_list_055.append([
                     msg.data[18],
                     msg.data[19],
                     msg.data[20]
                 ])
-                self.gyro_list_055.append([
+                self.mag_list_055.append([
                     msg.data[21],
                     msg.data[22],
                     msg.data[23]
                 ])
-                self.mag_list_055.append([
-                    msg.data[24],
-                    msg.data[25],
-                    msg.data[26]
+
+                qx = msg.data[27]
+                qy = msg.data[28]
+                qz = msg.data[29]
+                qw = msg.data[30]
+                roll = self.get_roll(qx, qy, qz, qw)
+                pitch = self.get_pitch(qx, qy, qz, qw)
+                yaw = self.get_yaw(qx, qy, qz, qw)
+
+                self.euler_list_086.append([
+                    roll,
+                    pitch,
+                    yaw
                 ])
 
                 self.get_logger().info("collect data: " + str(self.n))
@@ -158,10 +171,10 @@ class CarverMessenger(Node):
             imu_086.header.stamp = self.get_clock().now().to_msg()
             imu_086.header.frame_id = 'imu_086_frame'
 
-            imu_086.orientation.x = msg.data[30]
-            imu_086.orientation.y = msg.data[31]
-            imu_086.orientation.z = msg.data[32]
-            imu_086.orientation.w = msg.data[33]
+            imu_086.orientation.x = msg.data[27]
+            imu_086.orientation.y = msg.data[28]
+            imu_086.orientation.z = msg.data[29]
+            imu_086.orientation.w = msg.data[30]
 
             imu_086.angular_velocity.x = msg.data[6]
             imu_086.angular_velocity.y = msg.data[7]
@@ -190,17 +203,17 @@ class CarverMessenger(Node):
             imu_055.header.stamp = imu_086.header.stamp
             imu_055.header.frame_id = 'imu_055_frame'
 
-            imu_055.orientation.x = msg.data[34]
-            imu_055.orientation.y = msg.data[35]
-            imu_055.orientation.z = msg.data[36]
-            imu_055.orientation.w = msg.data[37]
+            imu_055.orientation.x = msg.data[31]
+            imu_055.orientation.y = msg.data[32]
+            imu_055.orientation.z = msg.data[33]
+            imu_055.orientation.w = msg.data[34]
 
-            imu_055.angular_velocity.x = msg.data[21]
-            imu_055.angular_velocity.y = msg.data[22]
-            imu_055.angular_velocity.z = msg.data[23]
-            imu_055.linear_acceleration.x = msg.data[18]
-            imu_055.linear_acceleration.y = msg.data[19]
-            imu_055.linear_acceleration.z = msg.data[20]
+            imu_055.angular_velocity.x = msg.data[18]
+            imu_055.angular_velocity.y = msg.data[19]
+            imu_055.angular_velocity.z = msg.data[20]
+            imu_055.linear_acceleration.x = msg.data[15]
+            imu_055.linear_acceleration.y = msg.data[16]
+            imu_055.linear_acceleration.z = msg.data[17]
 
             imu_055.orientation_covariance = self.euler_cov_055
             imu_055.linear_acceleration_covariance = self.acc_cov_055
@@ -210,9 +223,9 @@ class CarverMessenger(Node):
             mag_055 = MagneticField()
             mag_055.header.stamp = imu_055.header.stamp
             mag_055.header.frame_id = 'imu_055_frame'
-            mag_055.magnetic_field.x = msg.data[24]
-            mag_055.magnetic_field.y = msg.data[25]
-            mag_055.magnetic_field.z = msg.data[26]
+            mag_055.magnetic_field.x = msg.data[21]
+            mag_055.magnetic_field.y = msg.data[22]
+            mag_055.magnetic_field.z = msg.data[23]
             mag_055.magnetic_field_covariance = self.mag_cov_055
 
             # Publish IMU 086 data and Magnetometer data
@@ -260,7 +273,59 @@ class CarverMessenger(Node):
     def extract_covariance(self, value, key):
         return value.get(key, [])
 
-   
+    def get_roll(self, dqx, dqy, dqz, dqw):
+        norm = math.sqrt(dqw**2 + dqx**2 + dqy**2 + dqz**2)
+
+        # Normalize the quaternion components
+        dqx /= norm
+        dqy /= norm
+        dqz /= norm
+        dqw /= norm
+
+        # Calculate roll (x-axis rotation)
+        ysqr = dqy * dqy
+        t0 = +2.0 * (dqw * dqx + dqy * dqz)
+        t1 = +1.0 - 2.0 * (dqx * dqx + ysqr)
+        roll = math.atan2(t0, t1)
+
+        return roll
+
+    def get_pitch(self, dqx, dqy, dqz, dqw):
+        norm = math.sqrt(dqw**2 + dqx**2 + dqy**2 + dqz**2)
+
+        # Normalize the quaternion components
+        dqx /= norm
+        dqy /= norm
+        dqz /= norm
+        dqw /= norm
+
+        # Calculate pitch (y-axis rotation)
+        t2 = +2.0 * (dqw * dqy - dqz * dqx)
+
+        # Clamp t2 to stay within the asin range
+        t2 = max(-1.0, min(1.0, t2))
+
+        # Calculate pitch
+        pitch = math.asin(t2)
+
+        return pitch
+
+    def get_yaw(self, dqx, dqy, dqz, dqw):
+        norm = math.sqrt(dqw**2 + dqx**2 + dqy**2 + dqz**2)
+
+        # Normalize the quaternion components
+        dqx /= norm
+        dqy /= norm
+        dqz /= norm
+        dqw /= norm
+
+        # Calculate yaw (z-axis rotation)
+        ysqr = dqy * dqy
+        t3 = +2.0 * (dqw * dqz + dqx * dqy)
+        t4 = +1.0 - 2.0 * (ysqr + dqz * dqz)
+        yaw = math.atan2(t3, t4)
+
+        return yaw
 
 def main(args=None):
     rclpy.init(args=args)

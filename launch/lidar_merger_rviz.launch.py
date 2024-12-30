@@ -47,23 +47,6 @@ def generate_launch_description():
         )
     )
 
-    # Micro-ROS Agent 1
-    micro_ros_agent_1 = Node(
-        package='micro_ros_agent',
-        executable='micro_ros_agent',
-        name='micro_ros_agent_1',
-        arguments=['serial', '--dev', '/dev/ttyACM0', '-b', '2000000'],
-        output='screen'
-    )
-
-    # Micro-ROS Agent 2
-    micro_ros_agent_2 = Node(
-        package='micro_ros_agent',
-        executable='micro_ros_agent',
-        name='micro_ros_agent_2',
-        arguments=['serial', '--dev', '/dev/ttyACM1', '-b', '2000000'],
-        output='screen'
-    )
 
     # Launch Description
     launch_description = LaunchDescription()
@@ -73,7 +56,6 @@ def generate_launch_description():
     launch_description.add_action(dummy_robot)
     launch_description.add_action(joint_state_publisher_gui)
     launch_description.add_action(lidar_launch)
-    # launch_description.add_action(micro_ros_agent_1)
-    # launch_description.add_action(micro_ros_agent_2)
+
 
     return launch_description

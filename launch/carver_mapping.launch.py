@@ -11,25 +11,22 @@ from launch.substitutions import LaunchConfiguration
 from launch.substitutions import Command, LaunchConfiguration, PythonExpression
 
 def generate_launch_description():
- 
-     # use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    config_dir = os.path.join(get_package_share_directory("carver_controller"), "config")
-    # config_file = os.path.join(config_dir, 'mapper_params_online_sync.yaml')
-
-    rviz_config_dir = os.path.join(
-        get_package_share_directory("carver_controller"), "rviz"
-    )
-    rviz_config_file = os.path.join(rviz_config_dir, "mapping.rviz")
     
-    rviz = Node(
-        package="rviz2",
-        executable="rviz2",
-        name="rviz2",
-        output="screen",
-        arguments=["-d", rviz_config_file],
-    )
+    pkg_carver_controller = get_package_share_directory('carver_controller')
 
- 
+    # LiDAR Merger RVIZ setup
+    lidar_merger_rviz = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_carver_controller, 'launch', 'lidar_merger_rviz.launch.py')
+        )
+    )
+    
+    micro_ros = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_carver_controller, 'launch', 'micro_ros.launch.py')
+        )
+    )
+    
     messenger = Node(
     package='carver_controller',
     executable='carver_messenger.py',
@@ -54,9 +51,11 @@ def generate_launch_description():
 
     # Launch Description
     launch_description = LaunchDescription()
+    launch_description.add_action(lidar_merger_rviz)
+    launch_description.add_action(micro_ros)
     launch_description.add_action(messenger)
     launch_description.add_action(odometry)
-    launch_description.add_action(rviz)
+
 
 
     return launch_description

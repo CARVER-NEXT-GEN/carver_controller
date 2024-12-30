@@ -86,40 +86,71 @@ class CarverOdriveManualSteeringNode(Node):
 
         
     def odrive_loop(self):
+        """
+        Periodically called method to command velocity on ODrive and check for errors.
+        If any ODrive errors are detected (axis, motor, or encoder), then attempt to reconnect.
+        """
         self.vx_speed = self.accl_vel / (2.0 * math.pi)
 
         try:
+            # Grab the axis
             axis = self.odrv.axis0
-
-            # Check if 'error' attribute exists
-            if hasattr(axis, 'error') and (axis.error != 0 or axis.motor.error != 0 or axis.encoder.error != 0):
+            
+            # Check if the error attributes exist and are non-zero
+            if hasattr(axis, 'error') and (axis.error != 0 or 
+                                        axis.motor.error != 0 or 
+                                        axis.encoder.error != 0):
                 self.get_logger().error("ODrive Axis Errors detected.")
                 self.get_logger().error(f"Axis Error: {hex(axis.error)}")
                 self.get_logger().error(f"Motor Error: {hex(axis.motor.error)}")
-                self.odrv.clear_errors()
-                self.get_logger().info("Errors cleared.")
-                
-            self.odrv.axis0.controller.config.control_mode = ControlMode.VELOCITY_CONTROL
-            self.odrv.axis0.controller.input_vel = self.vx_speed
-            
-            wheel_velocity = self.odrv.axis0.pos_vel_mapper.vel * 2 * math.pi * 1.041677/ 9.65 #Convert rps to radps
+                self.get_logger().error(f"Encoder Error: {hex(axis.encoder.error)}")
+
+                # Attempt to clear errors
+                try:
+                    self.odrv.clear_errors()
+                    self.get_logger().info("ODrive errors cleared.")
+                except Exception as clear_err:
+                    self.get_logger().error(f"Failed to clear ODrive errors: {clear_err}")
+
+                # Attempt to reconnect
+                self.get_logger().info("Attempting to reconnect to ODrive due to detected errors...")
+                try:
+                    self.initial_odrive()  # Or your custom re-init method
+                    self.get_logger().info("Successfully reconnected to ODrive.")
+                except Exception as reconnection_error:
+                    self.get_logger().error(f"Failed to reconnect to ODrive: {reconnection_error}")
+                    # Depending on your application, you might want to raise or handle further
+
+            # If no errors or after clearing, set the control mode and velocity
+            axis.controller.config.control_mode = ControlMode.VELOCITY_CONTROL
+            axis.controller.input_vel = self.vx_speed
+
+            # Calculate wheel velocity from the ODrive feedback
+            # Example: converting from revolutions per second (RPS) to rad/s, etc.
+            wheel_velocity = (
+                axis.pos_vel_mapper.vel * 2.0 * math.pi * 1.041677 / 9.65
+            )  # Example: Convert RPS to rad/s (user-defined calculation)
             wheel_velocity_msg = Float32()
-            wheel_velocity_msg.data = float(wheel_velocity * 0.16) #0.16 = wheel radius
+            wheel_velocity_msg.data = float(wheel_velocity * 0.16)  # Multiply by wheel radius
             self.wheel_velocity_pub.publish(wheel_velocity_msg)
-            # Get odrive speed from encoder.
+
+            # Optionally retrieve and log velocity from the encoder
             self.odrive_get_vel()
-            self.get_logger().info(f"Set Speed = {self.accl_vel} rad/s {self.vx_speed} rev/s")
+            self.get_logger().info(
+                f"Set Speed = {self.accl_vel:.2f} rad/s ({self.vx_speed:.2f} rev/s)"
+            )
 
         except Exception as e:
+            # Catch any other exceptions (including lost connection)
             self.get_logger().error(f"An error occurred: {e}")
             self.get_logger().info("Attempting to reconnect to ODrive...")
             try:
-                
+                # Attempt reconnection logic here
+                self.initial_odrive()
                 self.get_logger().info("Reconnected to ODrive.")
-                # Re-initialize ODrive settings
-                self.initial_odrive()   
             except Exception as reconnection_error:
                 self.get_logger().error(f"Failed to reconnect to ODrive: {reconnection_error}")
+
 
     
     def odrive_get_vel(self):

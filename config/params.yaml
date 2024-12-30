@@ -4,6 +4,7 @@
     flip2: false
     inverse1: true
     inverse2: true
+    # Back Lidar
     laser1Alpha: 0.0
     laser1AngleMax: 0.0
     laser1AngleMin: -90.0
@@ -13,14 +14,15 @@
     laser1XOff: -0.85
     laser1YOff: 0.34
     laser1ZOff: 0.0
+    # Front Lidar
     laser2Alpha: 180.0
-    laser2AngleMax: 94.0
-    laser2AngleMin: 0.0
+    laser2AngleMax: 0.0
+    laser2AngleMin: -90.0
     laser2B: 0
     laser2G: 255
     laser2R: 0
-    laser2XOff: 0.3
-    laser2YOff: 0.475
+    laser2XOff: 0.92
+    laser2YOff: -0.386
     laser2ZOff: 0.0
     pointCloudTopic: cloud_in
     pointCloutFrameId: laser

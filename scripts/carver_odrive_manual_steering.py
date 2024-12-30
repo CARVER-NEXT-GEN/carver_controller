@@ -30,7 +30,7 @@ class CarverOdriveManualSteeringNode(Node):
         # self.create_subscription(Twist, "cmd_vel_confidence", self.cmd_vel_callback, 10)
         # self.ackaman_feedback_pub = self.create_publisher(AckermannFeedback, "feedback", 10)
         self.wheel_velocity_pub = self.create_publisher(Float32, "feedback_wheelspeed", 10)
-        self.diag_pub = self.create_publisher(String, "motor_diag", 10)
+        # self.diag_pub = self.create_publisher(String, "motor_diag", 10)
         self.cmd_vel_pub = self.create_publisher(Twist, "cmd_vel", 10)
         
         self.create_timer(0.01, self.cmd_loop)

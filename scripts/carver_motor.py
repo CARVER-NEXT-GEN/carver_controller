@@ -9,12 +9,8 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 import math
-from std_msgs.msg import String, Float32, Float64, UInt16,Int8
+from std_msgs.msg import String, Float32, Float64, UInt16
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSReliabilityPolicy
-from numpy import interp
-
-
-# 565 -3250
 
 class CarverOdriveManualSteeringNode(Node):
     def __init__(self):
@@ -28,12 +24,15 @@ class CarverOdriveManualSteeringNode(Node):
         self.torque_cons = 25.07
         self.Jerk = 200.0
         self.create_subscription(UInt16, "/accl_publisher", self.accl_callback, best_effort_qos)
-        self.create_subscription(Int8, "/accel_direction", self.accel_dir_callback, 10)
+
         # self.create_subscription(Twist, "cmd_vel_confidence", self.cmd_vel_callback, 10)
         # self.ackaman_feedback_pub = self.create_publisher(AckermannFeedback, "feedback", 10)
-        self.wheel_velocity_pub = self.create_publisher(Float32, "feedback_wheelspeed", 10)
-        # self.diag_pub = self.create_publisher(String, "motor_diag", 10)
+        # self.wheel_velocity_pub = self.create_publisher(Float32, "feedback_wheelspeed", 10)
+        self.diag_pub = self.create_publisher(String, "motor_diag", 10)
         self.cmd_vel_pub = self.create_publisher(Twist, "cmd_vel", 10)
+        # Create longitudinal speed publisher that get velocity from odrive. 
+        self.longitudinal_pub = self.create_publisher(Float32, "longitudinal", 10)
+        self.position_pub = self.create_publisher(Float32,"position", 10)
         
         self.create_timer(0.01, self.cmd_loop)
         self.create_timer(0.01, self.odrive_loop)
@@ -48,16 +47,11 @@ class CarverOdriveManualSteeringNode(Node):
         self.steering_cmd = self.center_steer
         self.steer_raw = 0
         self.accl_vel = 0
-        self.accel_dir = 0
         self.initial_odrive()
-        
-    def accel_dir_callback(self, msg: Int8):
-        self.accel_dir = msg.data
-        #self.get_logger().info(f"Acceleration Direction: {self.accel_dir}")
 
     def Odrive_VelControl(self):
         self.odrv.axis0.controller.config.control_mode = ControlMode.VELOCITY_CONTROL
-        self.odrv.axis0.controller.config.vel_ramp_rate = 60
+        self.odrv.axis0.controller.config.vel_ramp_rate = 20
         self.odrv.axis0.controller.config.input_mode = InputMode.VEL_RAMP
     
     def Odrive_TorqueControl(self):
@@ -101,13 +95,9 @@ class CarverOdriveManualSteeringNode(Node):
                 
             self.odrv.axis0.controller.config.control_mode = ControlMode.VELOCITY_CONTROL
             self.odrv.axis0.controller.input_vel = self.vx_speed
-            
-            wheel_velocity = self.odrv.axis0.pos_vel_mapper.vel * 2 * math.pi * 1.041677/ 9.65 #Convert rps to radps
-            wheel_velocity_msg = Float32()
-            wheel_velocity_msg.data = float(wheel_velocity * 0.16) #0.16 = wheel radius
-            self.wheel_velocity_pub.publish(wheel_velocity_msg)
             # Get odrive speed from encoder.
             self.odrive_get_vel()
+            self.odrive_get_pos()
             self.get_logger().info(f"Set Speed = {self.accl_vel} rad/s {self.vx_speed} rev/s")
 
         except Exception as e:
@@ -117,14 +107,25 @@ class CarverOdriveManualSteeringNode(Node):
                 
                 self.get_logger().info("Reconnected to ODrive.")
                 # Re-initialize ODrive settings
-                self.initial_odrive()   
+                self.initial_odrive()
             except Exception as reconnection_error:
                 self.get_logger().error(f"Failed to reconnect to ODrive: {reconnection_error}")
 
+
+            # print(self.odrv.axis0.controller.config.control_mode, self.steering_cmd, self.vx_speed)
     
     def odrive_get_vel(self):
-        vel = self.odrv.axis0.vel_estimate
-        #print(f"current velocity from odrive is {vel}")
+        vel = self.odrv.axis0.vel_estimate*2.0*math.pi*0.175
+        msg = Float32()
+        msg.data = float(vel)
+        self.longitudinal_pub.publish(msg)
+        print(f"current velocity from odrive is {vel}")
+    
+    def odrive_get_pos(self):
+        pos = self.odrv.axis0.pos_estimate*2.0*math.pi*0.175
+        msg = Float32()
+        msg.data = float(pos)
+        self.position_pub.publish(msg)
     
     def cmd_loop(self):
         pass
@@ -139,11 +140,10 @@ class CarverOdriveManualSteeringNode(Node):
     
     def accl_callback(self, msg: UInt16):
         raw_data = msg.data
-        if raw_data < 620 :
+        if raw_data < 15000 :
             raw_data = 0
         
-
-        linear_vel = self.accel_dir*float(interp(float(raw_data),[620,3200],[0,235.5])) # 235.5 radps = 37.5 rev/s
+        linear_vel = float(raw_data)*((3.0*60.0*2.0*math.pi*0.175)/50000.0)
         self.accl_vel = linear_vel
         # self.get_logger().info(f"Set Speed = {self.accl_vel} radps")
         msg = Twist()
@@ -152,11 +152,6 @@ class CarverOdriveManualSteeringNode(Node):
         # self.get_logger().info(f"{msg}")
         self.cmd_vel_pub.publish(msg)
 
-    def accel_dir_callback(self, msg: Int8):
-        self.accel_dir = float(msg.data)
-
-        
-        
 
 def main(args=None):
     rclpy.init(args=args)

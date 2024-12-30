@@ -30,7 +30,9 @@ install(PROGRAMS
   scripts/dummy_script.py
   scripts/carver_messenger.py
   scripts/carver_odrive.py
+  scripts/carver_motor.py
   scripts/carver_odrive_manual_steering.py
+  scripts/ackerman_yaw_rate_odom.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -53,6 +55,7 @@ install(DIRECTORY
   # add directories here
   launch
   config
+  rviz
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()

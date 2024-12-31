@@ -11,7 +11,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Paths
     pkg_carver_description = get_package_share_directory('carver_description')
-    rviz_path = os.path.join(pkg_carver_description, 'rviz', 'display_merge_lidar.rviz')
+    rviz_path = os.path.join(pkg_carver_description, 'rviz', 'mapping.rviz')
     pkg_carver_controller = get_package_share_directory('carver_controller')
 
     # Nodes and Launch Files

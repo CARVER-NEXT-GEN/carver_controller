@@ -27,6 +27,9 @@ def generate_launch_description():
         )
     )
     
+    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    config_file = os.path.join(pkg_carver_controller, 'config','mapper_params_online_sync.yaml')
+    
     messenger = Node(
     package='carver_controller',
     executable='carver_messenger.py',
@@ -48,6 +51,13 @@ def generate_launch_description():
     # remappings={("/tf", "/tf_odom")},
     output='screen')
     
+    slam_toolbox =  Node(
+        package='slam_toolbox',
+        executable='sync_slam_toolbox_node',
+        name='sync_slam_toolbox_node',
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}, config_file])
+    
 
     # Launch Description
     launch_description = LaunchDescription()
@@ -55,7 +65,7 @@ def generate_launch_description():
     launch_description.add_action(micro_ros)
     launch_description.add_action(messenger)
     launch_description.add_action(odometry)
-
+    launch_description.add_action(slam_toolbox)
 
 
     return launch_description

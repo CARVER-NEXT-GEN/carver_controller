@@ -92,9 +92,9 @@ def generate_launch_description():
 
         # Lidar 1 Node
         Node(
-            package='sllidar_ros2',
-            executable='sllidar_node',
-            name='sllidar_node_1',
+            package='rplidar_ros',
+            executable='rplidar_node',
+            name='rplidar_node_1',
             parameters=[{
                 'channel_type': channel_type_1,
                 'serial_port': serial_port_1,
@@ -103,16 +103,16 @@ def generate_launch_description():
                 'inverted': inverted_1,
                 'angle_compensate': angle_compensate_1,
                 'scan_mode': scan_mode_1,
-                'scan_frequency': 15.0
+                'scan_frequency': 20.0
             }],
             remappings=[('scan', 'lidar_1/scan')],  # Remap 'scan' to 'scan1'
             output='screen'),
 
         # Lidar 2 Node
         Node(
-            package='sllidar_ros2',
-            executable='sllidar_node',
-            name='sllidar_node_2',
+            package='rplidar_ros',
+            executable='rplidar_node',
+            name='rplidar_node_2',
             parameters=[{
                 'channel_type': channel_type_2,
                 'serial_port': serial_port_2,
@@ -121,7 +121,7 @@ def generate_launch_description():
                 'inverted': inverted_2,
                 'angle_compensate': angle_compensate_2,
                 'scan_mode': scan_mode_2,
-                'scan_frequency': 15.0
+                'scan_frequency': 20.0
             }],
             remappings=[('scan', 'lidar_2/scan')],  # Remap 'scan' to 'scan2'
             output='screen'),

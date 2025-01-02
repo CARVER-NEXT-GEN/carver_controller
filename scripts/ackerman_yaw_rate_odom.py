@@ -16,14 +16,14 @@ class YawrateOdom(Node):
         queue_size = 10
         self.dt_loop = 0.01
         # Publisher
-        self.publisher = self.create_publisher(Odometry, 'odom', queue_size)
+        self.publisher = self.create_publisher(Odometry, 'yaw_rate/odom', queue_size)
         self.timer = self.create_timer(self.dt_loop, self.timer_callback)
         self.publisher_imu = self.create_publisher(Float32, 'imu/degree', queue_size)
 
         # Subscriber
         self.subscription_imu = self.create_subscription(
             Imu,
-            '/imu_086/data',
+            '/imu_055/data',
             self.feedback_imu,
             queue_size)
         

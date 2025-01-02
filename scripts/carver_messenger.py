@@ -179,9 +179,9 @@ class CarverMessenger(Node):
             imu_086.angular_velocity.x = msg.data[6]
             imu_086.angular_velocity.y = msg.data[7]
             imu_086.angular_velocity.z = msg.data[8]
-            imu_086.linear_acceleration.x = msg.data[3]
-            imu_086.linear_acceleration.y = msg.data[4]
-            imu_086.linear_acceleration.z = msg.data[5]
+            imu_086.linear_acceleration.x = msg.data[0]
+            imu_086.linear_acceleration.y = msg.data[1]
+            imu_086.linear_acceleration.z = msg.data[2]
 
             imu_086.orientation_covariance = self.euler_cov_086 # Not sure to use quat or euler
             imu_086.linear_acceleration_covariance = self.acc_cov_086
@@ -211,9 +211,9 @@ class CarverMessenger(Node):
             imu_055.angular_velocity.x = msg.data[18]
             imu_055.angular_velocity.y = msg.data[19]
             imu_055.angular_velocity.z = msg.data[20]
-            imu_055.linear_acceleration.x = msg.data[15]
-            imu_055.linear_acceleration.y = msg.data[16]
-            imu_055.linear_acceleration.z = msg.data[17]
+            imu_055.linear_acceleration.x = msg.data[12]
+            imu_055.linear_acceleration.y = msg.data[13]
+            imu_055.linear_acceleration.z = msg.data[14]
 
             imu_055.orientation_covariance = self.euler_cov_055
             imu_055.linear_acceleration_covariance = self.acc_cov_055

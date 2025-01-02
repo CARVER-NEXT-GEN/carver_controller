@@ -13,7 +13,7 @@ def generate_launch_description():
     
     # Lidar 1 Configurations
     channel_type_1 = LaunchConfiguration('channel_type_1', default='serial')
-    serial_port_1 = LaunchConfiguration('serial_port_1', default='/dev/ttyUSB1')
+    serial_port_1 = LaunchConfiguration('serial_port_1', default='/dev/ttyUSB0')
     serial_baudrate_1 = LaunchConfiguration('serial_baudrate_1', default='1000000')
     frame_id_1 = LaunchConfiguration('frame_id_1', default='laser1')
     inverted_1 = LaunchConfiguration('inverted_1', default='false')
@@ -22,7 +22,7 @@ def generate_launch_description():
 
     # Lidar 2 Configurations
     channel_type_2 = LaunchConfiguration('channel_type_2', default='serial')
-    serial_port_2 = LaunchConfiguration('serial_port_2', default='/dev/ttyUSB0')
+    serial_port_2 = LaunchConfiguration('serial_port_2', default='/dev/ttyUSB1')
     serial_baudrate_2 = LaunchConfiguration('serial_baudrate_2', default='1000000')
     frame_id_2 = LaunchConfiguration('frame_id_2', default='laser2')
     inverted_2 = LaunchConfiguration('inverted_2', default='false')

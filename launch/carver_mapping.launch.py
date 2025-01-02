@@ -58,14 +58,23 @@ def generate_launch_description():
         output='screen',
         parameters=[{'use_sim_time': use_sim_time}, config_file])
     
+    robot_localization_node = Node(
+       package='robot_localization',
+       executable='ekf_node',
+       name='ekf_filter_node',
+       output='screen',
+       parameters=[os.path.join(pkg_carver_controller, 'config','ekf.yaml')]
+)
+    
 
     # Launch Description
     launch_description = LaunchDescription()
     launch_description.add_action(lidar_merger_rviz)
-    launch_description.add_action(micro_ros)
+    # launch_description.add_action(micro_ros)
     launch_description.add_action(messenger)
-    launch_description.add_action(odometry)
-    launch_description.add_action(slam_toolbox)
+    # launch_description.add_action(odometry)
+    # launch_description.add_action(slam_toolbox)
+    # launch_description.add_action(robot_localization_node)
 
 
     return launch_description

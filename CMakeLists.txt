@@ -33,6 +33,7 @@ install(PROGRAMS
   scripts/carver_motor.py
   scripts/carver_odrive_manual_steering.py
   scripts/ackerman_yaw_rate_odom.py
+  scripts/fix_imu_frame.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

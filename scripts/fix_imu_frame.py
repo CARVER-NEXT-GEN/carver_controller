@@ -13,6 +13,15 @@ class FixImuFrame(Node):
     def __init__(self):
         super().__init__('fix_imu_frame_node')
         self.get_logger().info('fix imu frame node has been started')
+
+        # Declare parameters for frame_ids
+        self.declare_parameter('frame_id', 'camera_link')  # Default parent frame
+        self.declare_parameter('child_frame_id', 'camera_imu_optical_frame')  # Default child frame
+
+        # Get the parameters
+        self.frame_id = self.get_parameter('frame_id').get_parameter_value().string_value
+        self.child_frame_id = self.get_parameter('child_frame_id').get_parameter_value().string_value
+
         self.sub = self.create_subscription(Imu, 'rtabmap/imu', self.imu_callback, 10)
         self.pub = self.create_publisher(Imu, 'imu_l515/data', 10)
         self.br = TransformBroadcaster(self)
@@ -32,7 +41,7 @@ class FixImuFrame(Node):
 
         # Create a new IMU message
         swapped_msg = Imu()
-        swapped_msg.header = msg.header
+        swapped_msg.header.frame_id = self.child_frame_id
 
         # Swap orientation axes
         swapped_msg.orientation.x = q_rotated[2]
@@ -53,8 +62,8 @@ class FixImuFrame(Node):
         # Create TransformStamped message
         t = TransformStamped()
         t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = 'camera_link'  # Parent frame
-        t.child_frame_id = 'camera_imu_optical_frame'  # Child frame
+        t.header.frame_id = self.frame_id  # Parent frame from parameter
+        t.child_frame_id = self.child_frame_id  # Child frame from parameter
         
         # Translation (optional, set to zero if not needed)
         t.transform.translation.x = 0.0

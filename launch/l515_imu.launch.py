@@ -5,7 +5,6 @@ from ament_index_python.packages import get_package_share_directory
 import os
 
 def generate_launch_description():
-
     # Get the path to the RViz file
     rviz_config_path = os.path.join(
         get_package_share_directory('carver_controller'),
@@ -44,7 +43,11 @@ def generate_launch_description():
     imu_fix_node = Node(
         package='carver_controller',
         executable='fix_imu_frame.py',
-        name='fix_imu_frame_node'
+        name='fix_imu_frame_node',
+        parameters=[
+            {'frame_id': 'camera_link'},
+            {'child_frame_id': 'camera_imu_optical_frame'}
+        ]
     )
     
     # Add RViz2

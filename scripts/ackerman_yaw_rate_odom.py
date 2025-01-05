@@ -36,7 +36,7 @@ class YawrateOdom(Node):
         )
 
         # Initialize the transform broadcaster
-        self.tf_br = TransformBroadcaster(self)
+        # self.tf_br = TransformBroadcaster(self)
         self.isOdomUpdate = False
 
         # Initialize odometry variables

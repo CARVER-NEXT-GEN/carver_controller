@@ -57,7 +57,7 @@ class FixImuFrame(Node):
         # Swap linear acceleration axes
         swapped_msg.linear_acceleration.x = msg.linear_acceleration.z
         swapped_msg.linear_acceleration.y = -msg.linear_acceleration.x
-        swapped_msg.linear_acceleration.z = msg.linear_acceleration.y
+        swapped_msg.linear_acceleration.z = -msg.linear_acceleration.y
 
         # Create TransformStamped message
         t = TransformStamped()

@@ -17,6 +17,7 @@ class YawrateOdom(Node):
         self.dt_loop = 0.01
         # Publisher
         self.publisher = self.create_publisher(Odometry, 'yaw_rate/odom', queue_size)
+        # self.publisher = self.create_publisher(TransformStamped, 'yaw_rate/odom', queue_size)
         self.timer = self.create_timer(self.dt_loop, self.timer_callback)
         self.publisher_imu = self.create_publisher(Float32, 'imu/degree', queue_size)
 
@@ -82,6 +83,10 @@ class YawrateOdom(Node):
         self.x = 0.0
         self.y = 0.0
         self.th = 0.0
+        
+        self.yaw_dot = 0.0
+        self.ax = 0.0
+        
     def feedback_wheelspeed(self, msg):
         self.wheelspeed = msg.data
         
@@ -96,6 +101,7 @@ class YawrateOdom(Node):
             self.initial_orientation = yaw
 
         self.relative_yaw = yaw - self.initial_orientation
+        self.ax = msg.linear_acceleration.x
 
     def timer_callback(self):
         delta_x = self.wheelspeed * math.cos(self.relative_yaw) * self.dt_loop
@@ -119,11 +125,12 @@ class YawrateOdom(Node):
             w=quaternion[3]
         )
         )
-        odom_msg.twist.twist.linear = Vector3(x=0.0, y=0.0, z=0.0)
-        odom_msg.twist.twist.angular = Vector3(x=0.0, y=0.0, z=0.0)
+        odom_msg.twist.twist.linear = Vector3(x=self.wheelspeed , y=0.0, z=0.0)
+        odom_msg.twist.twist.angular = Vector3(x=0.0, y=0.0, z=self.yaw_dot)
 
         self.publisher.publish(odom_msg)
         self.publisher_imu.publish(Float32(data=self.relative_yaw*180/math.pi))
+        
         transform = TransformStamped()
         transform.header.stamp = odom_msg.header.stamp
         transform.header.frame_id = 'odom'
@@ -132,8 +139,9 @@ class YawrateOdom(Node):
         transform.transform.translation.y = odom_msg.pose.pose.position.y
         transform.transform.translation.z = odom_msg.pose.pose.position.z
         transform.transform.rotation = odom_msg.pose.pose.orientation
-
-        self.tf_br.sendTransform(transform)
+        
+        # self.publisher.publish(transform)
+        # self.tf_br.sendTransform(transform)
 
         # Publish the odometry message
         # self.publisher.publish(self.odom_output)

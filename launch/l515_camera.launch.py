@@ -5,12 +5,6 @@ from ament_index_python.packages import get_package_share_directory
 import os
 
 def generate_launch_description():
-    # Get the path to the RViz file
-    rviz_config_path = os.path.join(
-        get_package_share_directory('carver_controller'),
-        'rviz',
-        'L515_camera.rviz'
-    )
 
     # Add RealSense camera node with the updated path to rs_launch.py
     realsense_node = ExecuteProcess(
@@ -50,18 +44,30 @@ def generate_launch_description():
         ]
     )
     
-    # Add RViz2
-    rviz_node = ExecuteProcess(
-        cmd=['rviz2', '-d', rviz_config_path],
+    # Add RTAB-Map node
+    rtabmap_node = ExecuteProcess(
+        cmd=[
+            'ros2', 'launch', 'rtabmap_launch', 'rtabmap.launch.py',
+            'rtabmap_args:=--delete_db_on_start --Optimizer/GravitySigma 0.3',
+            'depth_topic:=/camera/aligned_depth_to_color/image_raw',
+            'rgb_topic:=/camera/color/image_raw',
+            'camera_info_topic:=/camera/color/camera_info',
+            'approx_sync:=false',
+            'wait_imu_to_init:=true',
+            'imu_topic:=/imu_l515/data',
+            'frame_id:=camera_link',
+            'depth_camera_info_topic:=/camera/depth/camera_info',
+            'qos:=0'
+        ],
         output='screen'
     )
 
     # Create the launch description object
     launch_description = LaunchDescription()
+    launch_description.add_action(rtabmap_node)
     launch_description.add_action(realsense_node)
     launch_description.add_action(imu_filter_node)
     launch_description.add_action(imu_fix_node)
-    launch_description.add_action(rviz_node)
 
     # Return the launch description
     return launch_description

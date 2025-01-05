@@ -7,8 +7,6 @@ Panels:
         - /Global Options1
         - /Status1
         - /RobotModel1/Description Topic1
-        - /TF1
-        - /TF1/Frames1
       Splitter Ratio: 0.5221987366676331
     Tree Height: 280
   - Class: rviz_common/Selection
@@ -218,7 +216,7 @@ Visualization Manager:
         y_scale: 1
         z_scale: 1
       Class: rviz_imu_plugin/Imu
-      Enabled: true
+      Enabled: false
       Name: Imu_l515
       Topic:
         Depth: 5
@@ -227,7 +225,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /imu_l515/data
-      Value: true
+      Value: false
       fixed_frame_orientation: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -305,7 +303,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: camera_link
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -348,7 +346,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 4.91052770614624
+      Distance: 4.647462368011475
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -363,10 +361,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.17979644238948822
+      Pitch: 0.1747964471578598
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.158579111099243
+      Yaw: 3.1285789012908936
     Saved: ~
 Window Geometry:
   Displays:

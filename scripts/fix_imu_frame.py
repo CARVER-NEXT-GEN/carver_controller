@@ -42,6 +42,7 @@ class FixImuFrame(Node):
         # Create a new IMU message
         swapped_msg = Imu()
         swapped_msg.header.frame_id = self.child_frame_id
+        swapped_msg.header.stamp = self.get_clock().now().to_msg()  # Add header timestamp
 
         # Swap orientation axes
         swapped_msg.orientation.x = q_rotated[2]

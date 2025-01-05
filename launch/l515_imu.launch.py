@@ -18,7 +18,7 @@ def generate_launch_description():
              'enable_rgbd:=true', 'enable_sync:=true', 'align_depth.enable:=true', 
              'enable_color:=true', 'enable_depth:=true', 'publish_tf:=true', 
              'unite_imu_method:=2', 'enable_gyro:=true', 'enable_accel:=true', 
-             'enable_infra2:=true', 'enable_infra1:=true'],
+             'enable_infra2:=true', 'enable_infra1:=true', 'pointcloud.enable:=true'],
         output='screen'
     )
     

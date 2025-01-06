@@ -58,14 +58,43 @@ def generate_launch_description():
         output='screen',
         parameters=[{'use_sim_time': use_sim_time}, config_file])
     
-    robot_localization_node = Node(
-       package='robot_localization',
-       executable='ekf_node',
-       name='ekf_filter_node',
-       output='screen',
-       parameters=[os.path.join(pkg_carver_controller, 'config','ekf.yaml')]
-)
-    
+#     robot_localization_node = Node(
+#        package='robot_localization',
+#        executable='ekf_node',
+#        name='ekf_filter_node',
+#        output='screen',
+#        parameters=[os.path.join(pkg_carver_controller, 'config','ekf.yaml')]
+# )
+
+    ekf_filter_node_odom = Node(
+            package='robot_localization', 
+            executable='ekf_node', 
+            name='ekf_filter_node_odom',
+	        output='screen',
+            parameters=[os.path.join(pkg_carver_controller, 'config','dual_ekf_navsat_example.yaml')],
+            remappings=[('odometry/filtered', 'odometry/local')]           
+           ),
+    ekf_filter_node_map = Node(
+            package='robot_localization', 
+            executable='ekf_node', 
+            name='ekf_filter_node_map',
+	        output='screen',
+            parameters=[os.path.join(pkg_carver_controller, 'config','dual_ekf_navsat_example.yaml')],
+            remappings=[('odometry/filtered', 'odometry/global')]
+           ),           
+    navsat_transform_node = Node(
+            package='robot_localization', 
+            executable='navsat_transform_node', 
+            name='navsat_transform',
+	        output='screen',
+            parameters=[os.path.join(pkg_carver_controller, 'config','dual_ekf_navsat_example.yaml')],
+            remappings=[('imu/data', 'imu/data'),
+                        ('gps/fix', 'gps/fix'), 
+                        ('gps/filtered', 'gps/filtered'),
+                        ('odometry/gps', 'odometry/gps'),
+                        ('odometry/filtered', 'odometry/global')]           
+
+           )       
 
     # Launch Description
     launch_description = LaunchDescription()
@@ -74,7 +103,11 @@ def generate_launch_description():
     launch_description.add_action(messenger)
     # launch_description.add_action(motor)
     launch_description.add_action(odometry)
-    launch_description.add_action(robot_localization_node)
+    
+    launch_description.add_action(ekf_filter_node_odom)
+    launch_description.add_action(ekf_filter_node_map)
+    launch_description.add_action(navsat_transform_node)
+    
     launch_description.add_action(slam_toolbox)
 
 

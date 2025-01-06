@@ -39,12 +39,32 @@ def generate_launch_description():
         output='screen'
     )
     
+    # Micro-ROS Agent 4
+    micro_ros_agent_4 = Node(
+        package='micro_ros_agent',
+        executable='micro_ros_agent',
+        name='micro_ros_agent_4',
+        arguments=['serial', '--dev', '/dev/ttyACM3', '-b', '2000000'],
+        output='screen'
+    )
+    
+    # Micro-ROS Agent 5
+    micro_ros_agent_5 = Node(
+        package='micro_ros_agent',
+        executable='micro_ros_agent',
+        name='micro_ros_agent_5',
+        arguments=['serial', '--dev', '/dev/ttyACM4', '-b', '2000000'],
+        output='screen'
+    )
+    
 
     # Launch Description
     launch_description = LaunchDescription()
     launch_description.add_action(micro_ros_agent_1)
     launch_description.add_action(micro_ros_agent_2)
     launch_description.add_action(micro_ros_agent_3)
+    launch_description.add_action(micro_ros_agent_4)
+    # launch_description.add_action(micro_ros_agent_5)
 
 
     return launch_description

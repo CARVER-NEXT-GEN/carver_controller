@@ -51,12 +51,12 @@ def generate_launch_description():
     # remappings={("/tf", "/tf_odom")},
     output='screen')
     
-    gps_node = Node(
-        package='carver_gps',
-        executable='RTK_GPS.py',
-        name='carver_gps_node',
-        output='screen'
-    )
+    slam_toolbox =  Node(
+        package='slam_toolbox',
+        executable='sync_slam_toolbox_node',
+        name='sync_slam_toolbox_node',
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}, config_file])
     
 #     robot_localization_node = Node(
 #        package='robot_localization',
@@ -66,13 +66,6 @@ def generate_launch_description():
 #        parameters=[os.path.join(pkg_carver_controller, 'config','ekf.yaml')]
 # )
 
-    slam_toolbox =  Node(
-        package='slam_toolbox',
-        executable='sync_slam_toolbox_node',
-        name='sync_slam_toolbox_node',
-        output='screen',
-        parameters=[{'use_sim_time': use_sim_time}, config_file])
-
     ekf_filter_node_odom = Node(
             package='robot_localization', 
             executable='ekf_node', 
@@ -80,7 +73,7 @@ def generate_launch_description():
 	        output='screen',
             parameters=[os.path.join(pkg_carver_controller, 'config','dual_ekf_navsat_example.yaml')],
             remappings=[('odometry/filtered', 'odometry/local')]           
-            )
+           ),
     ekf_filter_node_map = Node(
             package='robot_localization', 
             executable='ekf_node', 
@@ -88,14 +81,14 @@ def generate_launch_description():
 	        output='screen',
             parameters=[os.path.join(pkg_carver_controller, 'config','dual_ekf_navsat_example.yaml')],
             remappings=[('odometry/filtered', 'odometry/global')]
-           )           
+           ),           
     navsat_transform_node = Node(
             package='robot_localization', 
             executable='navsat_transform_node', 
             name='navsat_transform',
 	        output='screen',
             parameters=[os.path.join(pkg_carver_controller, 'config','dual_ekf_navsat_example.yaml')],
-            remappings=[('/imu', '/imu_055/data'),
+            remappings=[('imu/data', 'imu/data'),
                         ('gps/fix', 'gps/fix'), 
                         ('gps/filtered', 'gps/filtered'),
                         ('odometry/gps', 'odometry/gps'),
@@ -110,7 +103,6 @@ def generate_launch_description():
     launch_description.add_action(messenger)
     # launch_description.add_action(motor)
     launch_description.add_action(odometry)
-    launch_description.add_action(gps_node)
     
     launch_description.add_action(ekf_filter_node_odom)
     launch_description.add_action(ekf_filter_node_map)

@@ -55,7 +55,7 @@ ekf_filter_node:
                   false,  false,  true,         # roll, pitch, yaw angles
                   false, false, false,        # vx, vy, vz velocities
                   false,  false,  true,         # roll_rate, pitch_rate, yaw_rate
-                  true,  false,  false]         # ax, ay, az accelerations
+                  false,  false,  false]         # ax, ay, az accelerations
 
     imu0_queue_size: 5
     imu0_relative: true

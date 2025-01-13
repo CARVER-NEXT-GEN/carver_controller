@@ -5,7 +5,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, ExecuteProcess, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import Command, LaunchConfiguration, PythonExpression
@@ -27,8 +27,15 @@ def generate_launch_description():
         )
     )
     
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    config_file = os.path.join(pkg_carver_controller, 'config','mapper_params_online_sync.yaml')
+    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
+    config_file = os.path.join(pkg_carver_controller, 'config','mapper_params_online.yaml')
+    #config_file = '/home/carver/Documents/GitHub/CARVER_WS/src/carver_controller/config/mapper_params_online.yaml'
+    
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='false',
+        description='Use simulation time'
+    )
     
     messenger = Node(
     package='carver_controller',
@@ -65,6 +72,15 @@ def generate_launch_description():
        output='screen',
        parameters=[os.path.join(pkg_carver_controller, 'config','ekf.yaml')]
 )
+    slam_toolbox_process = ExecuteProcess(
+        cmd=[
+            'ros2', 'run', 'slam_toolbox', 'sync_slam_toolbox_node',
+            '--ros-args',
+            '-p', f'use_sim_time:=false',
+            '--params-file', config_file
+        ],
+        output='screen'
+    )
     
 
     # Launch Description
@@ -75,7 +91,7 @@ def generate_launch_description():
     # launch_description.add_action(motor)
     launch_description.add_action(odometry)
     launch_description.add_action(robot_localization_node)
-    launch_description.add_action(slam_toolbox)
+    launch_description.add_action(slam_toolbox_process)
 
 
     return launch_description

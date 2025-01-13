@@ -17,7 +17,7 @@ def generate_launch_description():
         package='micro_ros_agent',
         executable='micro_ros_agent',
         name='micro_ros_agent_1',
-        arguments=['serial', '--dev', '/dev/ttyACM0', '-b', '2000000'],
+        arguments=['serial', '--dev', '/dev/ttyACM1', '-b', '2000000'], #055
         output='screen'
     )
 
@@ -26,7 +26,7 @@ def generate_launch_description():
         package='micro_ros_agent',
         executable='micro_ros_agent',
         name='micro_ros_agent_2',
-        arguments=['serial', '--dev', '/dev/ttyACM2', '-b', '2000000'],
+        arguments=['serial', '--dev', '/dev/ttyACM2', '-b', '2000000'], #086
         output='screen'
     )
     
@@ -35,7 +35,7 @@ def generate_launch_description():
         package='micro_ros_agent',
         executable='micro_ros_agent',
         name='micro_ros_agent_3',
-        arguments=['serial', '--dev', '/dev/ttyACM1', '-b', '2000000'],
+        arguments=['serial', '--dev', '/dev/ttyACM4', '-b', '2000000'], #amt
         output='screen'
     )
     
@@ -44,7 +44,7 @@ def generate_launch_description():
         package='micro_ros_agent',
         executable='micro_ros_agent',
         name='micro_ros_agent_4',
-        arguments=['serial', '--dev', '/dev/ttyACM3', '-b', '2000000'],
+        arguments=['serial', '--dev', '/dev/ttyACM5', '-b', '2000000'], # interface
         output='screen'
     )
     
@@ -64,7 +64,7 @@ def generate_launch_description():
     launch_description.add_action(micro_ros_agent_2)
     launch_description.add_action(micro_ros_agent_3)
     launch_description.add_action(micro_ros_agent_4)
-    # launch_description.add_action(micro_ros_agent_5)
+    # launch_description.add_action(micro_ros_agent_5) 0   3
 
 
     return launch_description

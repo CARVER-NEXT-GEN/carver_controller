@@ -21,8 +21,8 @@
     laser2B: 0
     laser2G: 255
     laser2R: 0
-    laser2XOff: 0.92
-    laser2YOff: -0.386
+    laser2XOff: 0.91
+    laser2YOff: -0.25
     laser2ZOff: 0.0
     pointCloudTopic: cloud_in
     pointCloutFrameId: laser

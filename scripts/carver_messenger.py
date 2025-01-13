@@ -58,8 +58,9 @@ class CarverMessenger(Node):
             reliability=ReliabilityPolicy.BEST_EFFORT,
             depth=10
         )
-        self.imu_floatarray = self.create_subscription(Float64MultiArray, '/cubemx_imu_data', self.imu_callback, qos_profile)
-
+        self.imu055_floatarray = self.create_subscription(Float64MultiArray, '/bno055_cubemx', self.imu055_callback, qos_profile)
+        self.imu086_floatarray = self.create_subscription(Float64MultiArray, '/bno086_cubemx', self.imu086_callback, qos_profile)
+        
         self.n = 0
         self.n_max = 10000
         self.euler_list_086 = []
@@ -88,17 +89,113 @@ class CarverMessenger(Node):
         with open(self.imu_cov_path, 'w') as file:
             yaml.dump(value, file)
 
-    def imu_callback(self, msg:Float64MultiArray):
+    def imu055_callback(self, msg:Float64MultiArray):
+
+        if self.mode == 'save_covariance':
+            if self.n < self.n_max:
+                self.n+=1
+
+                self.euler_list_055.append([
+                    msg.data[16],
+                    msg.data[17],
+                    msg.data[18]
+                ])
+                self.quat_list_055.append([
+                    msg.data[0], 
+                    msg.data[1], 
+                    msg.data[2], 
+                    msg.data[3]
+                ])
+                self.acc_list_055.append([
+                    msg.data[4],
+                    msg.data[5],
+                    msg.data[6]
+                ])
+                self.gyro_list_055.append([
+                    msg.data[10],
+                    msg.data[11],
+                    msg.data[12]
+                ])
+                self.mag_list_055.append([
+                    msg.data[13],
+                    msg.data[14],
+                    msg.data[15]
+                ])
+
+                qx = msg.data[0]
+                qy = msg.data[1]
+                qz = msg.data[2]
+                qw = msg.data[3]
+                roll = self.get_roll(qx, qy, qz, qw)
+                pitch = self.get_pitch(qx, qy, qz, qw)
+                yaw = self.get_yaw(qx, qy, qz, qw)
+
+                self.euler_list_055.append([
+                    roll,
+                    pitch,
+                    yaw
+                ])
+
+                self.get_logger().info("collect data: " + str(self.n))
+                if self.n == self.n_max:
+                    self.get_logger().info("BNO055 Data collection complete. Saving covariance and shutting down.")
+                    self.compute_and_save_covariance()
+                    # rclpy.shutdown()
+                    exit()
+            return
+        elif self.mode == 'publish_data':   
+
+            # Parse IMU 055 data
+            imu_055 = Imu()
+            imu_055.header.stamp = self.get_clock().now().to_msg()
+            imu_055.header.frame_id = 'imu_055_frame'
+
+            imu_055.orientation.x = msg.data[0]
+            imu_055.orientation.y = msg.data[1]
+            imu_055.orientation.z = msg.data[2]
+            imu_055.orientation.w = msg.data[3]
+
+            imu_055.angular_velocity.x = msg.data[10]
+            imu_055.angular_velocity.y = msg.data[11]
+            imu_055.angular_velocity.z = msg.data[12]
+            
+            imu_055.linear_acceleration.x = msg.data[4]
+            imu_055.linear_acceleration.y = msg.data[5]
+            imu_055.linear_acceleration.z = msg.data[6]
+
+            imu_055.orientation_covariance = self.euler_cov_055
+            imu_055.linear_acceleration_covariance = self.acc_cov_055
+            imu_055.angular_velocity_covariance = self.gyro_cov_055
+
+            # Parse Magnetometer data for IMU 055
+            mag_055 = MagneticField()
+            mag_055.header.stamp = imu_055.header.stamp
+            mag_055.header.frame_id = 'imu_055_frame'
+            mag_055.magnetic_field.x = msg.data[13]
+            mag_055.magnetic_field.y = msg.data[14]
+            mag_055.magnetic_field.z = msg.data[15]
+            mag_055.magnetic_field_covariance = self.mag_cov_055
+
+            # Publish IMU 055 dataand Magnetometer data
+            self.imu_055_publisher.publish(imu_055)
+            self.mag_055_publisher.publish(mag_055)
+
+            # self.get_logger().info('Published IMU and MagneticField messages')
+            
+#/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            
+    def imu086_callback(self, msg:Float64MultiArray):
 
         if self.mode == 'save_covariance':
             if self.n < self.n_max:
                 self.n+=1
 
                 self.quat_list_086.append([
-                    msg.data[27],
-                    msg.data[28],
-                    msg.data[29],
-                    msg.data[30]
+                    msg.data[12],
+                    msg.data[13],
+                    msg.data[14],
+                    msg.data[15]
                 ])
                 self.acc_list_086.append([
                     msg.data[0],
@@ -116,37 +213,10 @@ class CarverMessenger(Node):
                     msg.data[11]
                 ])
 
-                self.euler_list_055.append([
-                    msg.data[24],
-                    msg.data[25],
-                    msg.data[26]
-                ])
-                self.quat_list_055.append([
-                    msg.data[31], 
-                    msg.data[32], 
-                    msg.data[33], 
-                    msg.data[34]
-                ])
-                self.acc_list_055.append([
-                    msg.data[12],
-                    msg.data[13],
-                    msg.data[14]
-                ])
-                self.gyro_list_055.append([
-                    msg.data[18],
-                    msg.data[19],
-                    msg.data[20]
-                ])
-                self.mag_list_055.append([
-                    msg.data[21],
-                    msg.data[22],
-                    msg.data[23]
-                ])
-
-                qx = msg.data[27]
-                qy = msg.data[28]
-                qz = msg.data[29]
-                qw = msg.data[30]
+                qx = msg.data[12]
+                qy = msg.data[13]
+                qz = msg.data[14]
+                qw = msg.data[15]
                 roll = self.get_roll(qx, qy, qz, qw)
                 pitch = self.get_pitch(qx, qy, qz, qw)
                 yaw = self.get_yaw(qx, qy, qz, qw)
@@ -159,7 +229,7 @@ class CarverMessenger(Node):
 
                 self.get_logger().info("collect data: " + str(self.n))
                 if self.n == self.n_max:
-                    self.get_logger().info("Data collection complete. Saving covariance and shutting down.")
+                    self.get_logger().info("BNO086 Data collection complete. Saving covariance and shutting down.")
                     self.compute_and_save_covariance()
                     # rclpy.shutdown()
                     exit()
@@ -171,14 +241,15 @@ class CarverMessenger(Node):
             imu_086.header.stamp = self.get_clock().now().to_msg()
             imu_086.header.frame_id = 'imu_086_frame'
 
-            imu_086.orientation.x = msg.data[27]
-            imu_086.orientation.y = msg.data[28]
-            imu_086.orientation.z = msg.data[29]
-            imu_086.orientation.w = msg.data[30]
+            imu_086.orientation.x = msg.data[12]
+            imu_086.orientation.y = msg.data[13]
+            imu_086.orientation.z = msg.data[14]
+            imu_086.orientation.w = msg.data[15]
 
             imu_086.angular_velocity.x = msg.data[6]
             imu_086.angular_velocity.y = msg.data[7]
             imu_086.angular_velocity.z = msg.data[8]
+            
             imu_086.linear_acceleration.x = msg.data[0]
             imu_086.linear_acceleration.y = msg.data[1]
             imu_086.linear_acceleration.z = msg.data[2]
@@ -196,46 +267,12 @@ class CarverMessenger(Node):
             mag_086.magnetic_field.z = msg.data[11]
             mag_086.magnetic_field_covariance = self.mag_cov_086
 
-            # ////////////////////////////////////////////////////////
-
-            # Parse IMU 055 data
-            imu_055 = Imu()
-            imu_055.header.stamp = imu_086.header.stamp
-            imu_055.header.frame_id = 'imu_055_frame'
-
-            imu_055.orientation.x = msg.data[31]
-            imu_055.orientation.y = msg.data[32]
-            imu_055.orientation.z = msg.data[33]
-            imu_055.orientation.w = msg.data[34]
-
-            imu_055.angular_velocity.x = msg.data[18]
-            imu_055.angular_velocity.y = msg.data[19]
-            imu_055.angular_velocity.z = msg.data[20]
-            imu_055.linear_acceleration.x = msg.data[12]
-            imu_055.linear_acceleration.y = msg.data[13]
-            imu_055.linear_acceleration.z = msg.data[14]
-
-            imu_055.orientation_covariance = self.euler_cov_055
-            imu_055.linear_acceleration_covariance = self.acc_cov_055
-            imu_055.angular_velocity_covariance = self.gyro_cov_055
-
-            # Parse Magnetometer data for IMU 055
-            mag_055 = MagneticField()
-            mag_055.header.stamp = imu_055.header.stamp
-            mag_055.header.frame_id = 'imu_055_frame'
-            mag_055.magnetic_field.x = msg.data[21]
-            mag_055.magnetic_field.y = msg.data[22]
-            mag_055.magnetic_field.z = msg.data[23]
-            mag_055.magnetic_field_covariance = self.mag_cov_055
-
             # Publish IMU 086 data and Magnetometer data
             self.imu_086_publisher.publish(imu_086)
             self.mag_086_publisher.publish(mag_086)
-            # Publish IMU 055 dataand Magnetometer data
-            self.imu_055_publisher.publish(imu_055)
-            self.mag_055_publisher.publish(mag_055)
 
             # self.get_logger().info('Published IMU and MagneticField messages')
+
 
     def compute_and_save_covariance(self):
         # Compute covariance for BNO086

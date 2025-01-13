@@ -87,9 +87,9 @@ def generate_launch_description():
     launch_description = LaunchDescription()
     launch_description.add_action(lidar_merger_rviz)
     # launch_description.add_action(micro_ros)
-    launch_description.add_action(messenger)
+    # launch_description.add_action(messenger)
     # launch_description.add_action(motor)
-    launch_description.add_action(odometry)
+    # launch_description.add_action(odometry)
     launch_description.add_action(robot_localization_node)
     launch_description.add_action(slam_toolbox_process)
 

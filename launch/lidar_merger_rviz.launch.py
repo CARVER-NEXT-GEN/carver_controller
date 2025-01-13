@@ -55,7 +55,7 @@ def generate_launch_description():
     launch_description.add_action(rviz_node)
     launch_description.add_action(dummy_robot)
     launch_description.add_action(joint_state_publisher_gui)
-    # launch_description.add_action(lidar_launch)
+    launch_description.add_action(lidar_launch)
 
 
     return launch_description

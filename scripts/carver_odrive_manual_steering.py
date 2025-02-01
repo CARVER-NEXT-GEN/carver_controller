@@ -81,7 +81,7 @@ class CarverOdriveManualSteeringNode(Node):
         # Removed the call to self.Odrive_TorqueControl() if you don't need torque control
         # self.Odrive_TorqueControl()
 
-        print("Finished setup Odrive")
+        self.get_logger().info("Finished setup Odrive")
         time.sleep(1)
 
         

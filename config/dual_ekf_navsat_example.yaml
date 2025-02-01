@@ -325,7 +325,7 @@ navsat_transform:
   ros__parameters:
     frequency: 50.0
     delay: 3.0
-    magnetic_declination_radians: 0.0429351  # For lat/long 55.944831, -3.186998
+    magnetic_declination_radians: 0.0122173048  # For lat/long 55.944831, -3.186998
     yaw_offset: 1.570796327  # IMU reads 0 facing magnetic north, not east
     zero_altitude: false
     broadcast_utm_transform: false

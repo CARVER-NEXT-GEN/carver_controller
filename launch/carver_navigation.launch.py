@@ -38,7 +38,7 @@ def generate_launch_description():
     map_dir = os.path.join(get_package_share_directory(
         'carver_controller'), 'maps')
     map_file = LaunchConfiguration('map', default=os.path.join(
-        map_dir, '1stAutoLoopClosureMapFIBO.yaml')) #gensurv_outdoor1
+        map_dir, 'navmap_gimp.yaml')) #gensurv_outdoor1
     # ==============================================================================
 
 

@@ -6,8 +6,8 @@
     inverse2: true
     # Back Lidar
     laser1Alpha: 0.0
-    laser1AngleMax: 0.0
-    laser1AngleMin: -90.0
+    laser1AngleMax: 20.0
+    laser1AngleMin: -110.0
     laser1B: 0
     laser1G: 0
     laser1R: 255
@@ -16,8 +16,8 @@
     laser1ZOff: 0.0
     # Front Lidar
     laser2Alpha: 180.0
-    laser2AngleMax: 0.0
-    laser2AngleMin: -104.0
+    laser2AngleMax: 20.0
+    laser2AngleMin: -110.0
     laser2B: 0
     laser2G: 255
     laser2R: 0

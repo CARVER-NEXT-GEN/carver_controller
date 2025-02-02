@@ -7,7 +7,7 @@ ekf_filter_node:
     frequency: 50.0                           # Filter update frequency (Hz)
     two_d_mode: false                         # Set 'true' if you really only want to operate in a planar environment
     publish_acceleration: true                # Publish acceleration state
-    publish_tf: true                          # Whether to broadcast transform over /tf
+    publish_tf: false                          # Whether to broadcast transform over /tf
     permit_corrected_publication: false
     # Frame names
     map_frame: map

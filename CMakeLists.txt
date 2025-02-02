@@ -34,6 +34,7 @@ install(PROGRAMS
   scripts/carver_odrive_manual_steering.py
   scripts/ackerman_yaw_rate_odom.py
   scripts/fix_imu_frame.py
+  scripts/carver_invkin.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -56,6 +57,7 @@ install(DIRECTORY
   # add directories here
   launch
   config
+  maps
   rviz
   DESTINATION share/${PROJECT_NAME})
 

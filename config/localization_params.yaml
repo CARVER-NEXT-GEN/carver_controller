@@ -1,0 +1,11 @@
+# localization_params.yaml
+slam_toolbox:
+  ros__parameters:
+    use_sim_time: false
+    mode: localization
+    map_file_name: "/absolute/path/to/carver_controller/maps/my_map.yaml"
+    # Adjust these to suit your robot
+    base_frame: "base_link"
+    odom_frame: "odom"
+    map_frame: "map"
+    scan_topic: "scan"

@@ -36,7 +36,7 @@ class YawrateOdom(Node):
         )
 
         # Initialize the transform broadcaster
-        # self.tf_br = TransformBroadcaster(self)
+        self.tf_br = TransformBroadcaster(self)
         self.isOdomUpdate = False
 
         # Initialize odometry variables
@@ -141,7 +141,7 @@ class YawrateOdom(Node):
         transform.transform.rotation = odom_msg.pose.pose.orientation
         
         # self.publisher.publish(transform)
-        # self.tf_br.sendTransform(transform)
+        self.tf_br.sendTransform(transform)
 
         # Publish the odometry message
         # self.publisher.publish(self.odom_output)

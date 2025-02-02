@@ -58,12 +58,6 @@ def generate_launch_description():
     # remappings={("/tf", "/tf_odom")},
     output='screen')
     
-    slam_toolbox =  Node(
-        package='slam_toolbox',
-        executable='async_slam_toolbox_node',
-        name='async_slam_toolbox_node',
-        output='screen',
-        parameters=[{'use_sim_time': use_sim_time}, config_file])
     
     robot_localization_node = Node(
        package='robot_localization',
@@ -72,46 +66,27 @@ def generate_launch_description():
        output='screen',
        parameters=[os.path.join(pkg_carver_controller, 'config','ekf.yaml')]
 )
-    slam_toolbox_process = ExecuteProcess(
-        cmd=[
-            'ros2', 'run', 'slam_toolbox', 'async_slam_toolbox_node',
-            '--ros-args',
-            '-p', f'use_sim_time:=false',
-            '--params-file', config_file
-        ],
-        output='screen'
-    )
-    
-    amcl_config = os.path.join("carver_controller", 'config', 'amcl_params.yaml')
-
     amcl_node = Node(
-        package='nav2_amcl',
-        executable='amcl',
-        name='amcl',
-        output='screen',
-        parameters=[amcl_config]
-    )
+       package='nav2_amcl',
+       executable='amcl',
+       name='amcl_node',
+       output='screen',
+       parameters=[os.path.join(pkg_carver_controller, 'config','amcl_params.yaml')]
+)
     
-    map_file = os.path.join("carver_controller", 'maps', 'Keepout_1stAutoLoopClosureMapFIBO.yaml')
-
+    map_file = os.path.join(pkg_carver_controller, 'maps', 'Keepout_1stAutoLoopClosureMapFIBO.yaml')
     
     map_server_node = Node(
         package='nav2_map_server',
         executable='map_server',
         name='map_server',
         output='screen',
-        parameters=[{
-            'yaml_filename': map_file,
-            'topic_name': 'map',
-            'frame_id': 'map'
-        }]
-    )
-    
-    rviz_node = Node(
-    package='rviz2',
-    executable='rviz2',
-    name='rviz2',
-    output='screen'
+        parameters=[
+            {
+                'use_sim_time': "false",
+                'yaml_filename': map_file  # e.g. "/home/user/maps/office_map.yaml"
+            }
+        ]
     )
 
     # Launch Description
@@ -124,8 +99,6 @@ def generate_launch_description():
     launch_description.add_action(robot_localization_node)
     launch_description.add_action(amcl_node)
     launch_description.add_action(map_server_node)
-    launch_description.add_action(rviz_node)
-    
 
 
     return launch_description

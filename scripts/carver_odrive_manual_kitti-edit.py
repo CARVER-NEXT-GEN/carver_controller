@@ -185,7 +185,7 @@ class CarverOdriveManualSteeringNode(Node):
             raw_data = 0
         
 
-        linear_vel = self.accel_dir*float(interp(float(raw_data),[620,3200],[0,235.5])) # 235.5 radps = 37.5 rev/s
+        linear_vel = self.accel_dir*float(interp(float(raw_data),[620,3200],[0,350.5])) # 235.5 radps = 37.5 rev/s
         self.accl_vel = linear_vel
         # self.get_logger().info(f"Set Speed = {self.accl_vel} radps")
         msg = Twist()

@@ -17,7 +17,7 @@
     # Front Lidar
     laser2Alpha: 180.0
     laser2AngleMax: 0.0
-    laser2AngleMin: -90.0
+    laser2AngleMin: -104.0
     laser2B: 0
     laser2G: 255
     laser2R: 0

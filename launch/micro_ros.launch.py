@@ -17,7 +17,7 @@ def generate_launch_description():
         package='micro_ros_agent',
         executable='micro_ros_agent',
         name='micro_ros_agent_1',
-        arguments=['serial', '--dev', '/dev/ttyACM1', '-b', '2000000'], #055
+        arguments=['serial', '--dev', '/dev/G474_BNO055', '-b', '2000000'], 
         output='screen'
     )
 
@@ -26,7 +26,7 @@ def generate_launch_description():
         package='micro_ros_agent',
         executable='micro_ros_agent',
         name='micro_ros_agent_2',
-        arguments=['serial', '--dev', '/dev/ttyACM2', '-b', '2000000'], #086
+        arguments=['serial', '--dev', '/dev/G474_BNO086', '-b', '2000000'],
         output='screen'
     )
     
@@ -35,7 +35,7 @@ def generate_launch_description():
         package='micro_ros_agent',
         executable='micro_ros_agent',
         name='micro_ros_agent_3',
-        arguments=['serial', '--dev', '/dev/ttyACM4', '-b', '2000000'], #amt
+        arguments=['serial', '--dev', '/dev/G474_interface', '-b', '2000000'],
         output='screen'
     )
     
@@ -44,19 +44,9 @@ def generate_launch_description():
         package='micro_ros_agent',
         executable='micro_ros_agent',
         name='micro_ros_agent_4',
-        arguments=['serial', '--dev', '/dev/ttyACM5', '-b', '2000000'], # interface
+        arguments=['serial', '--dev', '/dev/G474_steering', '-b', '2000000'],
         output='screen'
     )
-    
-    # Micro-ROS Agent 5
-    micro_ros_agent_5 = Node(
-        package='micro_ros_agent',
-        executable='micro_ros_agent',
-        name='micro_ros_agent_5',
-        arguments=['serial', '--dev', '/dev/ttyACM5', '-b', '2000000'],
-        output='screen'
-    )
-    
 
     # Launch Description
     launch_description = LaunchDescription()

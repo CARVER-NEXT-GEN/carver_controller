@@ -14,6 +14,8 @@ from geometry_msgs.msg import Twist, TransformStamped
 from tf2_msgs.msg import TFMessage
 from std_msgs.msg import Float32, String
 import math
+import pickle  # ใช้สำหรับ serialize ข้อมูลก่อนส่ง
+from nav_msgs.msg import OccupancyGrid
 
 class LaserScanPublisher(Node):
     def __init__(self):
@@ -30,7 +32,7 @@ class LaserScanPublisher(Node):
         config = zenoh.Config()
         config.insert_json5("connect/endpoints", json.dumps(["tcp/43.208.7.235:7447"]))  # Replace PORT_NUMBER with actual port
 
-        self.subscriber = self.create_subscription(LaserScan, 'scan', self.laser_callback, qos_profile)
+        self.subscriber = self.create_subscription(LaserScan, '/scan', self.laser_callback, qos_profile)
         # self.sub_robot_description = self.create_subscription(String, 'robot_description', self.robot_description_callback, qos_profile)
         self.zenoh_session = zenoh.open(config)
         
@@ -39,7 +41,7 @@ class LaserScanPublisher(Node):
         self.zenoh_pub_tf = self.zenoh_session.declare_publisher("robot/tf")
         self.zenoh_pub_tf_static = self.zenoh_session.declare_publisher("robot/tf_static")
         self.zenoh_pub_robot_description = self.zenoh_session.declare_publisher("robot/description")
-        
+        self.zenoh_pub_map = self.zenoh_session.declare_publisher('robot/map')
         
         self.create_timer(1/30, self.publish_images)
         self.zenoh_sub_cmd_vel = self.zenoh_session.declare_subscriber("cmd_vel", self.zenoh_cmd_vel)
@@ -70,12 +72,17 @@ class LaserScanPublisher(Node):
             self.color_image_callback,
             10
         )
-        self.depth_subscription = self.create_subscription(
-            Image,
-            '/camera/depth/image_rect_raw',
-            self.depth_image_callback,
-            10
-        )
+        self.map_subscription = self.create_subscription(
+            OccupancyGrid,
+            '/map',
+            self.map_callback,
+            10)
+        # self.depth_subscription = self.create_subscription(
+        #     Image,
+        #     '/camera/depth/image_rect_raw',
+        #     self.depth_image_callback,
+        #     10
+        # )
         
         # Subscribe ข้อมูล tf จาก topic /tf (tf2_msgs/TFMessage)
         # Subscribe ROS topic /tf และ /tf_static
@@ -108,6 +115,12 @@ class LaserScanPublisher(Node):
         # Timer สำหรับ publish static tf (ทุก 1 วินาที)
         self.timer_static = self.create_timer(1.0, self.publish_static_tf)
         
+    def map_callback(self, msg):    
+        map_data = pickle.dumps(msg)
+
+        # ส่งผ่าน Zenoh
+        self.zenoh_pub_map.put(map_data)
+        self.get_logger().info("Sent map data via Zenoh")
     
     def apply_deadband(self, value, threshold):
         """ ฟังก์ชันตรวจสอบ deadband: ถ้า |value| < threshold ให้ return 0.0 """
@@ -144,7 +157,7 @@ class LaserScanPublisher(Node):
             twist.angular.z = self.apply_deadband(twist.angular.z, self.deadband_angular)
             
             steer = Float32()
-            steer.data = twist.angular.z * 0.5
+            steer.data = twist.angular.z * -0.75
             pedal = Float32()
             pedal.data = twist.linear.x
             self.pub_steer_angle.publish(steer)
